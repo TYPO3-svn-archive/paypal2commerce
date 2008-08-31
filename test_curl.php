@@ -19,6 +19,12 @@ curl_setopt($curl, CURLOPT_AUTOREFERER, true);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($curl, CURLOPT_TIMEOUT, 10);
 
+/* Proxy configuration (userpasswd optional)
+	curl_setopt( $curl, CURLOPT_PROXYPORT, 8080 );
+	curl_setopt( $curl, CURLOPT_PROXY, 'http://127.0.0.1' );
+	curl_setopt( curl_setopt ( $ch, CURLOPT_PROXYUSERPWD, 'user:passwd' );
+ */
+
 $html = curl_exec($curl); // execute the curl command
 curl_close($curl); // close the connection
 

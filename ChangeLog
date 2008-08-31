@@ -1,8 +1,4 @@
 (add new changes on top of this file)
-08-03-18 Martin Holtz
-	* Added configuration parameter "debug"
-	* use now t3lib_div::locationHeaderUrl()
-
 07-12-23 Martin Holtz
 	* Writing the manual
 	* if config.baseUrl is not set, t3lib_div::getIndpEnv('TYPO3_SITE_URL') is be used
