@@ -22,3 +22,5 @@ payment_currency_jpy = 0
 payment_currency_usd = 0
 # cat=basic/other; type=int; label=Payment error PID: Defines the page ID to redirect to in case of processing errors
 payment_error_pid =
+# cat=basic; type=string; label=Debug
+debug = 0

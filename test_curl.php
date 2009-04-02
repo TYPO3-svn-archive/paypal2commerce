@@ -33,6 +33,6 @@ if (strlen($html) < 100) {
 	die('There was something wrong - '.$url.' could not be fetched?');
 } 
 
-echo 'Have an look at TYPO3.org<br>';
+echo 'You should now see typo3.org - gratulations CURL works.<br>';
 echo $html;
 ?> 
