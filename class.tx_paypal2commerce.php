@@ -263,19 +263,31 @@ class tx_paypal2commerce {
 		$payerID = urlencode($_REQUEST['PayerID']);
 		$serverName = urlencode($_SERVER['SERVER_NAME']);
 		$nvpstr='&TOKEN='.$token.'&PAYERID='.$payerID.'&PAYMENTACTION='.$paymentType.'&AMT='.$paymentAmount.'&CURRENCYCODE='.$currCodeType.'&IPADDRESS='.$serverName ;
-		$resArray=$this->hash_call("DoExpressCheckoutPayment",$nvpstr);
-		$ack = strtoupper($resArray["ACK"]);
 		
-		$returnResult = false;
 		try {
+			$basket = $GLOBALS['TSFE']->fe_user->tx_commerce_basket;
+				// check if amount has changed 
+			if (intval($basket->basket_sum_gross) != intval($_REQUEST['paymentAmount']*100)) {
+					// wrong sum
+				throw new PaymentException( 'A paypal service error has occurred: Amount mismatch', 
+					PAYERR_AMOUNT_MISMATCH,
+					array( 'error_no'  => PAYERR_AMOUNT_MISMATCH,
+						   'error_msg' => 'PAYPAL sum does not match basket sum'));
+			}
+			$resArray=$this->hash_call("DoExpressCheckoutPayment",$nvpstr);
+			$ack = strtoupper($resArray["ACK"]);
+			
+			$returnResult = false;
+		
 			if( $ack == "SUCCESS" ) {
-				$basket = $GLOBALS['TSFE']->fe_user->tx_commerce_basket;
-				if ($basket->basket_sum_gross == $resArray['AMT'] * 100) {
+				if (intval($basket->basket_sum_gross) == intval($resArray['AMT'] * 100)) {
 					$GLOBALS['TSFE']->fe_user->setKey('ses', 'paypal2commerce_token', NULL );
 					$GLOBALS["TSFE"]->storeSessionData();
 					$returnResult = true;
 				} else {
-					// wrong sum
+						// should not happen, has been checked before
+						// @TODO: cancel payment
+						// wrong sum
 					throw new PaymentException( 'A paypal service error has occurred: Amount mismatch', 
 						PAYERR_AMOUNT_MISMATCH,
 						array( 'error_no'  => PAYERR_AMOUNT_MISMATCH,
@@ -365,7 +377,7 @@ class tx_paypal2commerce {
 	 */
 	function hash_call($methodName, $nvpStr)
 	{
-		//declaring of global variables
+			// declaring of global variables
 		$this->constants();
 		$API_Endpoint = $this->paypal['API_Endpoint'];
 		$version = $this->paypal['version'];
@@ -373,7 +385,7 @@ class tx_paypal2commerce {
 		$API_Password = $this->paypal['API_Password'];
 		$API_Signature = $this->paypal['API_Signature'];
 	
-		//setting the curl parameters.
+			// setting the curl parameters.
 		$ch = curl_init();
 		if (false === $ch) {
 			die( 'curl_init - Error #' . __LINE__ );
@@ -381,7 +393,7 @@ class tx_paypal2commerce {
 		curl_setopt( $ch, CURLOPT_URL, $API_Endpoint );
 		curl_setopt( $ch, CURLOPT_VERBOSE, 1 );
 	
-		//turning off the server and peer verification(TrustManager Concept).
+			// turning off the server and peer verification(TrustManager Concept).
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, $this->paypal['curl_verifypeer'] );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, $this->paypal['curl_verifyhost'] );
 		
@@ -389,21 +401,21 @@ class tx_paypal2commerce {
 		curl_setopt( $ch, CURLOPT_POST, 1 );
  		curl_setopt( $ch, CURLOPT_TIMEOUT, $this->paypal['curl_timeout'] );
  		
- 		// configures cURL proxy if needed
+ 			// configures cURL proxy if needed
  		$this->checkCurlProxy( $ch );
 	
-		//NVPRequest for submitting to server
+			// NVPRequest for submitting to server
 		$nvpreq="METHOD=".urlencode($methodName)."&VERSION=".urlencode($version)."&PWD=".urlencode($API_Password)."&USER=".urlencode($API_UserName)."&SIGNATURE=".urlencode($API_Signature).$nvpStr;
 		
-		//setting the nvpreq as POST FIELD to curl
+			// setting the nvpreq as POST FIELD to curl
 		curl_setopt($ch,CURLOPT_POSTFIELDS,$nvpreq);
-		//getting response from server
+			// getting response from server
 		$response = curl_exec($ch);
 		$nvpResArray = array();
 		try {
 			if (!curl_errno($ch)) {
 				curl_close($ch);
-				//converting NVPResponse to an Associative Array
+					// converting NVPResponse to an Associative Array
 				$nvpResArray=$this->deformatNVP($response);
 			 } else {
 				throw new PaymentException( 'A connection to paypal could not be established!', 
@@ -521,16 +533,50 @@ class tx_paypal2commerce {
 		$cancelURL = urlencode($baseurl.$GLOBALS['TSFE']->cObj->typoLink_URL($conf));
 		
 		// Paypal Call - will be send via CURL
-		$nvpstr="&Amt=".$paymentAmount."&PAYMENTACTION=".$paymentType."&ReturnUrl=".$returnURL."&CANCELURL=".$cancelURL ."&CURRENCYCODE=".$currencyCodeType.'&address_override=1'.'&ADDRESSOVERRIDE=1';
+		$nvpstr="&Amt=".$paymentAmount."&PAYMENTACTION=".$paymentType."&ReturnUrl=".$returnURL."&CANCELURL=".$cancelURL ."&CURRENCYCODE=".$currencyCodeType;
 		
-		 // call to PayPal to get the Express Checkout token
-		$resArray = $this->hash_call("SetExpressCheckout",$nvpstr);
-		$_SESSION['reshash']=$resArray;
+		// Language-Settings
+		// @TODO: does not work? Why not?
+		$localcode = (isset($GLOBALS['TSFE']->tmpl->setup['config.']['paypal_language'])?$GLOBALS['TSFE']->tmpl->setup['config.']['paypal_language']:$GLOBALS['TSFE']->tmpl->setup['config.']['language']);
+		$nvpstr.= "&LOCALECODE=".strtoupper($localcode);
 
-		$ack = strtoupper($resArray["ACK"]);
+			// SET Address
+		$addresstyp = 'billing';
+		if (sizeof($this->pObj->MYSESSION['delivery']) > 0) $addresstyp = 'delivery';
+		$addr = $this->pObj->MYSESSION[$addresstyp];
+
+		$nvpstr.= '&ADDROVERRIDE=1'; // do not override the address via paypal
+		$nvpstr.= '&SHIPTONAME='.urlencode($addr['name'].' '.$addr['surname']);
+		
+		$nvpstr.= '&SHIPTOSTREET='.urlencode($addr['address']);
+		$nvpstr.= '&SHIPTOCITY='.urlencode($addr['city']);
 		try {
+			// get Countrycode, Paypal needs 'DE' etc.
+			$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
+				'cn_iso_2',
+				'static_countries',
+				'cn_iso_3=\''.$GLOBALS['TYPO3_DB']->quoteStr($addr['country']).'\'',
+				'',
+				'',
+				1);
+			if ($GLOBALS['TYPO3_DB']->sql_num_rows($res) != 1) {
+				throw new PaymentException('Selected Countrycode not available.', 
+						PAYERR_WRONG_COUNTRY);
+			}
+			$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
+			$nvpstr.= '&SHIPTOCOUNTRYCODE='.$row['cn_iso_2'];
+			$nvpstr.= '&SHIPTOZIP='.urlencode($addr['zip']);
+			$nvpstr.= '&PHONENUM='.urlencode($addr['phone']);
+			$nvpstr.= '&BUSINESS='.urlencode($addr['company']);
+			
+				// call to PayPal to get the Express Checkout token
+			$resArray = $this->hash_call("SetExpressCheckout",$nvpstr);
+			$_SESSION['reshash']=$resArray;
+	
+			$ack = strtoupper($resArray["ACK"]);
+				
 			if($ack=="SUCCESS"){
-				// Redirect to paypal.com here
+					// Redirect to paypal.com here
 				$token = urldecode($resArray["TOKEN"]);
 				$GLOBALS['TSFE']->fe_user->setKey('ses', 'paypal2commerce_token', $token );
 				$GLOBALS['TSFE']->storeSessionData();
@@ -574,7 +620,7 @@ class tx_paypal2commerce {
 @define(PAYERR_PAYPAL_SV, 0x66662);
 @define(PAYERR_WRONG_CURRENCY, 0x66663);
 @define(PAYERR_AMOUNT_MISMATCH, 0x66664);
-
+@define(PAYERR_WRONG_COUNTRY, 0x66665);
 
 /**
  * Class for Payment Exceptions.
