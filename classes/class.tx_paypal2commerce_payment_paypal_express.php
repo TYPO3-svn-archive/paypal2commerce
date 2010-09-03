@@ -134,14 +134,19 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 		//TODO address validation
 		try {
 			if ($ack!="SUCCESS") {
-				throw new PaymentException( 'A paypal service3 error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
-				PAYERR_PAYPAL_SV,
-				array( 'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
-						   'error_msg' => $resArray['L_LONGMESSAGE0']));
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'A paypal service3 error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					PAYERR_PAYPAL_SV,
+					array(
+						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
+						'error_msg' => $resArray['L_LONGMESSAGE0']
+					)
+				);
 			} else {
 				$returnResult = true;
 			}
-		} catch (PaymentException $e) {
+		} catch (tx_paypal2commerce_payment_exception $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
 			exit();
@@ -288,10 +293,15 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			// check if amount has changed
 			if (intval($basket->basket_sum_gross) != intval($_REQUEST['paymentAmount']*100)) {
 				// wrong sum
-				throw new PaymentException( 'A paypal service error has occurred: Amount mismatch',
-				PAYERR_AMOUNT_MISMATCH,
-				array( 'error_no'  => PAYERR_AMOUNT_MISMATCH,
-						   'error_msg' => 'PAYPAL sum does not match basket sum'));
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'A paypal service error has occurred: Amount mismatch',
+					PAYERR_AMOUNT_MISMATCH,
+					array(
+						'error_no'  => PAYERR_AMOUNT_MISMATCH,
+						'error_msg' => 'PAYPAL sum does not match basket sum'
+					)
+				);
 			}
 			$resArray=$this->hash_call("DoExpressCheckoutPayment",$nvpstr);
 			$ack = strtoupper($resArray["ACK"]);
@@ -307,18 +317,28 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 					// should not happen, has been checked before
 					// @TODO: cancel payment
 					// wrong sum
-					throw new PaymentException( 'A paypal service error has occurred: Amount mismatch',
-					PAYERR_AMOUNT_MISMATCH,
-					array( 'error_no'  => PAYERR_AMOUNT_MISMATCH,
-							   'error_msg' => 'PAYPAL sum does not match basket sum'));
+					throw t3lib_div::makeInstance(
+						'tx_paypal2commerce_payment_exception',
+						'A paypal service error has occurred: Amount mismatch', 
+						PAYERR_AMOUNT_MISMATCH,
+						array(
+							'error_no'  => PAYERR_AMOUNT_MISMATCH,
+							'error_msg' => 'PAYPAL sum does not match basket sum'
+						)
+					);
 				}
 			} else {
-				throw new PaymentException( 'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
-				PAYERR_PAYPAL_SV,
-				array( 'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
-						   'error_msg' => $resArray['L_LONGMESSAGE0']));
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					PAYERR_PAYPAL_SV,
+					array(
+						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
+						'error_msg' => $resArray['L_LONGMESSAGE0']
+					)
+				);
 			}
-		} catch (PaymentException $e) {
+		} catch (tx_paypal2commerce_payment_exception $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
 			exit();
@@ -436,12 +456,17 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				// converting NVPResponse to an Associative Array
 				$nvpResArray=$this->deformatNVP($response);
 			} else {
-				throw new PaymentException( 'A connection to paypal could not be established!',
-				PAYERR_CURL_CONN,
-				array( 'error_no'  => intval( curl_errno($ch) ),
-				'error_msg' => curl_error($ch)));
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'A connection to paypal could not be established!', 
+					PAYERR_CURL_CONN,
+					array(
+						'error_no'  => intval( curl_errno($ch) ),
+						'error_msg' => curl_error($ch)
+					)
+				);
 			}
-		} catch (PaymentException $e) {
+		} catch (tx_paypal2commerce_payment_exception $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
 			exit();
@@ -525,12 +550,17 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			$paymentType = 'Sale';
 			$currencyCodeType = strtoupper($currencyCodeType);
 			if ( !$this->isAllowedCurrency( $currencyCodeType ) ) {
-				throw new PaymentException( 'Paypal does not support this currency',
-				PAYERR_WRONG_CURRENCY,
-				array( 'error_no'  => intval( PAYERR_WRONG_CURRENCY ),
-						'error_msg' => 'Desired checkout currency type is not supported by PayPal' ));
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'Paypal does not support this currency', 
+					PAYERR_WRONG_CURRENCY, 
+					array(
+						'error_no'  => intval( PAYERR_WRONG_CURRENCY ),
+						'error_msg' => 'Desired checkout currency type is not supported by PayPal'
+					)
+				);
 			}
-		} catch (PaymentException $e) {
+		} catch (tx_paypal2commerce_payment_exception $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
 			exit();
@@ -590,8 +620,11 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				1
 			);
 			if ($GLOBALS['TYPO3_DB']->sql_num_rows($res) != 1) {
-				throw new PaymentException('Selected Countrycode not available: "'.htmlspecialchars($addr['country']).'"',
-				PAYERR_WRONG_COUNTRY);
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'Selected Countrycode not available: "'.htmlspecialchars($addr['country']).'"',
+					PAYERR_WRONG_COUNTRY
+				);
 			}
 			$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 			$nvpstr.= '&SHIPTOCOUNTRYCODE='.$row['cn_iso_2'];
@@ -614,14 +647,17 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				header("Location: ".$payPalURL);
 				exit();
 			} else {
-				throw new PaymentException( 'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
-				PAYERR_PAYPAL_SV,
-				array(
-					'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
-					'error_msg' => $resArray['L_LONGMESSAGE0'])
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					PAYERR_PAYPAL_SV,
+					array(
+						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
+						'error_msg' => $resArray['L_LONGMESSAGE0']
+					)
 				);
 			}
-		} catch (PaymentException $e) {
+		} catch (tx_paypal2commerce_payment_exception $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
 			exit();
