@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *  
-*  Based on paypal2commerce 0.0.1 from Martin Holtz <typo3@martinholtz.de>
+*  Based on paypal2commerce 0.5.1 from Martin Holtz <typo3@martinholtz.de>
 *  (c) 2010 Helge Funk <helge.funk@e-netconsulting.com>
 *  All rights reserved
 *
@@ -86,8 +86,9 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			// matching three-digit currency code
 			if (preg_match( '/^payment_currency_([a-z]){3,3}/i', $key) ) {
 				$currencyCode = strtoupper( substr( $key, -3) );
-				if ( in_array ( $currencyCode, $this->acceptedCurrencies ))
-				array_push( $arrCurrencies, $currencyCode );
+				if ( in_array ( $currencyCode, $this->acceptedCurrencies )) {
+					array_push( $arrCurrencies, $currencyCode );
+				}
 			}
 			next($keys);
 		}
@@ -132,7 +133,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 		$returnResult = false;
 		//TODO address validation
 		try {
-			if($ack!="SUCCESS") {
+			if ($ack!="SUCCESS") {
 				throw new PaymentException( 'A paypal service3 error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
 				PAYERR_PAYPAL_SV,
 				array( 'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
@@ -181,14 +182,17 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @param PaymentException $exception Exception object
 	 */
 	function debugAndLog( $exception ) {
-		if ( $GLOBALS['TYPO3_CONF_VARS']['SYS']['enable_DLOG'] )
-		t3lib_div::devLog( $exception->getMessage(),
-		$this->ext_key,
-		3,
-		array( $exception->getErrorNumber(),
-		$exception->getDetails()) );
-		if ( $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] )
-		debug ( $exception->getMessage() );
+		if ( $GLOBALS['TYPO3_CONF_VARS']['SYS']['enable_DLOG'] ) {
+			t3lib_div::devLog( $exception->getMessage(),
+			$this->ext_key,
+			3,
+			array( $exception->getErrorNumber(),
+			$exception->getDetails()) );
+		}
+		
+		if ( $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] ) {
+			debug ( $exception->getMessage() );
+		}
 	}
 
 	/**
@@ -198,8 +202,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @return array
 	 * @see                   https://www.paypal.com/en_US/ebook/PP_NVPAPI_DeveloperGuide/index.html
 	 */
-	function deformatNVP($nvpstr)
-	{
+	function deformatNVP($nvpstr) {
 		$intial=0;
 		$nvpArray = array();
 		while(strlen($nvpstr)){
@@ -230,7 +233,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @param  tx_commerce_pi3 $pObj    TYPO3 extension commerce checkout object
 	 * @return boolean	                true or false
 	 */
-	function finishingFunction($config,$session, $basket, $pObj ) {
+	function finishingFunction($config, $session, $basket, $pObj ) {
 		if(!is_object($this->pObj)) {
 			$this->pObj = $pObj;
 		}
@@ -378,7 +381,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @return string                   text that is displayed after last processing step
 	 * @see                             hasSpecialFinishingForm()
 	 */
-	function getSpecialFinishingForm($config, $session, $basket,$pObj) {
+	function getSpecialFinishingForm($config, $session, $basket, $pObj) {
 		$content = 'Error - there is something wrong... sorry, cannot finish your order.';;
 		return $content;
 	}
@@ -391,8 +394,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @return array associative array derived from PayPal's Name-Value Pair
 	 * @see  https://www.paypal.com/en_US/ebook/PP_NVPAPI_DeveloperGuide/index.html
 	 */
-	function hash_call($methodName, $nvpStr)
-	{
+	function hash_call($methodName, $nvpStr) {
 		// declaring of global variables
 		$this->constants();
 		$API_Endpoint = $this->paypal['API_Endpoint'];
@@ -437,7 +439,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				throw new PaymentException( 'A connection to paypal could not be established!',
 				PAYERR_CURL_CONN,
 				array( 'error_no'  => intval( curl_errno($ch) ),
-												   'error_msg' => curl_error($ch)));
+				'error_msg' => curl_error($ch)));
 			}
 		} catch (PaymentException $e) {
 			$this->debugAndLog($e);
@@ -462,10 +464,11 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 		}
 		$token=t3lib_div::_GP('token');
 		// returning boolean true shows configurable page content, false finishes payment processing
-		if ( !empty( $token ) )
-		return !$this->getFromPaypal();
-		else
-		return false;
+		if ( !empty( $token ) ) {
+			return !$this->getFromPaypal();
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -475,8 +478,9 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @return boolean                   true if currency type is accepted, otherwise false
 	 */
 	function isAllowedCurrency( $currencyCodeType ) {
-		if ( empty( $this->paypal ) )
-		$this->constants();
+		if ( empty( $this->paypal ) ) {
+			$this->constants();
+		}
 		return in_array( $currencyCodeType, $this->paypal['currencies'] );
 	}
 
@@ -515,16 +519,17 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @param integer $amount           total costs of basket in smallest payable unit (cents)
 	 * @param string  $currencyCodeType three-digit currency code
 	 */
-	function sendToPaypal($amount,$currencyCodeType = 'EUR') {
+	function sendToPaypal($amount, $currencyCodeType = 'EUR') {
 		try {
 			$paymentAmount = sprintf( "%01.2f",( $amount/100 ) );
 			$paymentType = 'Sale';
 			$currencyCodeType = strtoupper($currencyCodeType);
-			if ( !$this->isAllowedCurrency( $currencyCodeType ) )
-			throw new PaymentException( 'Paypal does not support this currency',
-			PAYERR_WRONG_CURRENCY,
-			array( 'error_no'  => intval( PAYERR_WRONG_CURRENCY ),
-					'error_msg' => 'Desired checkout currency type is not supported by PayPal' ));
+			if ( !$this->isAllowedCurrency( $currencyCodeType ) ) {
+				throw new PaymentException( 'Paypal does not support this currency',
+				PAYERR_WRONG_CURRENCY,
+				array( 'error_no'  => intval( PAYERR_WRONG_CURRENCY ),
+						'error_msg' => 'Desired checkout currency type is not supported by PayPal' ));
+			}
 		} catch (PaymentException $e) {
 			$this->debugAndLog($e);
 			header('Location: ' . $this->getPaymentErrorPageURL());
@@ -582,7 +587,8 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				'cn_iso_3=\''.$GLOBALS['TYPO3_DB']->quoteStr($addr['country'], 'static_countries').'\'',
 				'',
 				'',
-			1);
+				1
+			);
 			if ($GLOBALS['TYPO3_DB']->sql_num_rows($res) != 1) {
 				throw new PaymentException('Selected Countrycode not available: "'.htmlspecialchars($addr['country']).'"',
 				PAYERR_WRONG_COUNTRY);
@@ -599,7 +605,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 
 			$ack = strtoupper($resArray["ACK"]);
 
-			if($ack=="SUCCESS"){
+			if ($ack=="SUCCESS") {
 				// Redirect to paypal.com here
 				$token = urldecode($resArray["TOKEN"]);
 				$GLOBALS['TSFE']->fe_user->setKey('ses', 'paypal2commerce_token', $token );
@@ -607,12 +613,13 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 				$payPalURL = $this->paypal['PAYPAL_URL'].$token;
 				header("Location: ".$payPalURL);
 				exit();
-			} else  {
+			} else {
 				throw new PaymentException( 'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
 				PAYERR_PAYPAL_SV,
-				array( 'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
-						   'error_msg' => $resArray['L_LONGMESSAGE0']));
-					
+				array(
+					'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
+					'error_msg' => $resArray['L_LONGMESSAGE0'])
+				);
 			}
 		} catch (PaymentException $e) {
 			$this->debugAndLog($e);
@@ -628,13 +635,16 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @param object          $session  session object
 	 * @param tx_commerce_pi3 $pObj     TYPO3 extension commerce checkout object
 	 */
-	function updateOrder($orderUid, $session,$pObj) {
-		if(!is_object($this->pObj)) {
+	function updateOrder($orderUid, $session, $pObj) {
+		if (!is_object($this->pObj)) {
 			$this->pObj = $pObj;
 		}
 		$GLOBALS['TYPO3_DB']->exec_UPDATEquery(
 			'tx_commerce_orders','uid = '. intval( $orderUid ),
-		array('payment_ref_id' => $this->paymentRefId, 'comment' => $this->comment)
+			array(
+				'payment_ref_id' => $this->paymentRefId,
+				'comment' => $this->comment
+			)
 		);
 	}
 }

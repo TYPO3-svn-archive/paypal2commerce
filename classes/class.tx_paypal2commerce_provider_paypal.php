@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  Based on paypal2commerce 0.0.1 from Martin Holtz <typo3@martinholtz.de>
+*  Based on paypal2commerce 0.5.1 from Martin Holtz <typo3@martinholtz.de>
 *  (c) 2010 Helge Funk <helge.funk@e-netconsulting.com>
 *  All rights reserved
 *
