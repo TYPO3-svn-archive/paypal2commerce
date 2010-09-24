@@ -49,7 +49,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 *
 	 * @var unknown_type
 	 */
-	var $acceptedCurrencies = array( 'AUD', 'CAD', 'EUR', 'GBP', 'JPY', 'USD' );
+	var $acceptedCurrencies = array('AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'USD');
 
 	/**
 	 * Keeps extension key.
@@ -81,16 +81,26 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 */
 	function addCurrencies( &$extConf, &$arrCurrencies ) {
 		reset($extConf);
-		$keys = array_keys( $extConf, 1 );
-		while ( $key = current( $keys ) ) {
-			// matching three-digit currency code
-			if (preg_match( '/^payment_currency_([a-z]){3,3}/i', $key) ) {
-				$currencyCode = strtoupper( substr( $key, -3) );
-				if ( in_array ( $currencyCode, $this->acceptedCurrencies )) {
-					array_push( $arrCurrencies, $currencyCode );
+
+		try {
+			if (!empty($extConf['enabled_currencies'])) {
+				foreach (explode(',', $extConf['enabled_currencies']) as $currency) {
+					$currencyCode = strtoupper(trim($currency));
+					if (in_array($currencyCode, $this->acceptedCurrencies)) {
+						array_push($arrCurrencies, $currencyCode);
+					}
 				}
+			} else {
+				throw t3lib_div::makeInstance(
+					'tx_paypal2commerce_payment_exception',
+					'No supported currencies enabled!', 
+					1285321611
+				);
 			}
-			next($keys);
+		} catch (tx_paypal2commerce_payment_exception $e) {
+			$this->debugAndLog($e);
+			header('Location: ' . $this->getPaymentErrorPageURL());
+			exit();
 		}
 	}
 
