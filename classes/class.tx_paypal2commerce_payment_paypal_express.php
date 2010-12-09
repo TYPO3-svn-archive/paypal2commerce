@@ -1,7 +1,7 @@
 <?php
 /***************************************************************
 *  Copyright notice
-*  
+*
 *  Based on paypal2commerce 0.5.1 from Martin Holtz <typo3@martinholtz.de>
 *  (c) 2010 Helge Funk <helge.funk@e-netconsulting.com>
 *  All rights reserved
@@ -43,7 +43,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 * @var string
 	 */
 	protected $type = 'paypal_express';
-	
+
 	/**
 	 * Keeps all currency codes accepted by PayPal's NVP.
 	 *
@@ -93,7 +93,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			} else {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'No supported currencies enabled!', 
+					'No supported currencies enabled!',
 					1285321611
 				);
 			}
@@ -146,7 +146,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			if ($ack!="SUCCESS") {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'A paypal service3 error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					'A paypal service3 error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
 					PAYERR_PAYPAL_SV,
 					array(
 						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
@@ -204,7 +204,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			array( $exception->getErrorNumber(),
 			$exception->getDetails()) );
 		}
-		
+
 		if ( $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] ) {
 			debug ( $exception->getMessage() );
 		}
@@ -315,7 +315,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			}
 			$resArray=$this->hash_call("DoExpressCheckoutPayment",$nvpstr);
 			$ack = strtoupper($resArray["ACK"]);
-				
+
 			$returnResult = false;
 
 			if( $ack == "SUCCESS" ) {
@@ -329,7 +329,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 					// wrong sum
 					throw t3lib_div::makeInstance(
 						'tx_paypal2commerce_payment_exception',
-						'A paypal service error has occurred: Amount mismatch', 
+						'A paypal service error has occurred: Amount mismatch',
 						PAYERR_AMOUNT_MISMATCH,
 						array(
 							'error_no'  => PAYERR_AMOUNT_MISMATCH,
@@ -340,7 +340,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			} else {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
 					PAYERR_PAYPAL_SV,
 					array(
 						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
@@ -448,7 +448,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, $this->paypal['curl_timeout'] );
-			
+
 		// configures cURL proxy if needed
 		$this->checkCurlProxy( $ch );
 
@@ -468,7 +468,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			} else {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'A connection to paypal could not be established!', 
+					'A connection to paypal could not be established!',
 					PAYERR_CURL_CONN,
 					array(
 						'error_no'  => intval( curl_errno($ch) ),
@@ -562,8 +562,8 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			if ( !$this->isAllowedCurrency( $currencyCodeType ) ) {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'Paypal does not support this currency', 
-					PAYERR_WRONG_CURRENCY, 
+					'Paypal does not support this currency',
+					PAYERR_WRONG_CURRENCY,
 					array(
 						'error_no'  => intval( PAYERR_WRONG_CURRENCY ),
 						'error_msg' => 'Desired checkout currency type is not supported by PayPal'
@@ -641,7 +641,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			$nvpstr.= '&SHIPTOZIP='.urlencode($addr['zip']);
 			$nvpstr.= '&PHONENUM='.urlencode($addr['phone']);
 			$nvpstr.= '&BUSINESS='.urlencode($addr['company']);
-				
+
 			// call to PayPal to get the Express Checkout token
 			$resArray = $this->hash_call("SetExpressCheckout",$nvpstr);
 			$_SESSION['reshash']=$resArray;
@@ -659,7 +659,7 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 			} else {
 				throw t3lib_div::makeInstance(
 					'tx_paypal2commerce_payment_exception',
-					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'], 
+					'A paypal service error has occurred: ' . $resArray['L_SHORTMESSAGE0'],
 					PAYERR_PAYPAL_SV,
 					array(
 						'error_no'  => intval( $resArray['L_ERRORCODE0'] ),
