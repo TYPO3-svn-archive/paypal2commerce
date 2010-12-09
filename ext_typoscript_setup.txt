@@ -1,0 +1,3 @@
+plugin.tx_commerce_pi3.payment.paypal2commerce {
+	payment_error_pid = 
+}

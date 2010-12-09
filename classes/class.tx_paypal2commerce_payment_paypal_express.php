@@ -174,6 +174,12 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	 */
 	function constants() {
 		$ext_conf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->ext_key]);
+
+		if ($ext_conf['TSCONF_OVERRIDE']) {
+			$tsConf = $this->pObj->conf['payment.']['paypal2commerce.'];
+			$ext_conf = array_merge($ext_conf, $tsConf);
+		}
+
 		$this->paypal['API_Endpoint'] = $ext_conf['api_endpoint'];
 		$this->paypal['version'] = '2.3';
 		$this->paypal['API_UserName'] = $ext_conf['api_username'];
@@ -383,7 +389,12 @@ class tx_paypal2commerce_payment_paypal_express extends tx_commerce_payment_abst
 	function getPaymentErrorPageURL() {
 		$url = $GLOBALS["TSFE"]->config['config']['baseURL'];
 		$ext_conf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->ext_key]);
-		$url .= $GLOBALS['TSFE']->cObj->typoLink_URL( array( 'parameter' => $ext_conf['payment_error_pid'] ) );
+		if ($ext_conf['TSCONF_OVERRIDE']) {
+			$payment_error_pid = $this->pObj->conf['payment.']['paypal2commerce.']['payment_error_pid'];
+		} else {
+			$payment_error_pid = $ext_conf['payment_error_pid'];
+		}
+		$url .= $GLOBALS['TSFE']->cObj->typoLink_URL( array( 'parameter' => $payment_error_pid ) );
 		return $url;
 	}
 
